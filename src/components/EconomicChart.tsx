@@ -123,8 +123,7 @@ const EconomicChart = ({ title, subtitle, data, color = "#6E59A5", isEditable = 
             tickRotation: 0,
             legend: 'Value',
             legendOffset: -40,
-            legendPosition: 'start',
-            legendAlign: 'start'
+            legendPosition: 'start'
           }}
           pointSize={10}
           pointColor={{ theme: 'background' }}
