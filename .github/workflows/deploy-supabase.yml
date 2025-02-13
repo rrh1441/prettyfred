@@ -8,18 +8,20 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: Actions  # 👈 This ensures secrets are pulled from your GitHub Actions environment
+    environment: Actions  # 👈 Ensures secrets are pulled from GitHub Actions
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Supabase CLI  # 👈 Correct installation method
+      - name: Install Supabase CLI
         run: |
           curl -fsSL https://supabase.com/cli/install | sh
-          echo "$HOME/.supabase/bin" >> $GITHUB_PATH
+          echo "$HOME/.supabase/bin" >> $GITHUB_PATH  # Ensure CLI is in PATH
+          export PATH="$HOME/.supabase/bin:$PATH"    # Apply PATH change
 
-      - name: Verify Supabase CLI is Installed  # 👈 Debugging step
-        run: supabase --version
+      - name: Verify Supabase CLI Installation
+        run: supabase --version  # 👈 Check if CLI is installed properly
 
       - name: Set up environment variables
         run: |
