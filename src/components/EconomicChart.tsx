@@ -118,7 +118,7 @@ const EconomicChart = ({ title: initialTitle, subtitle, data, color = "#6E59A5",
       <div className="h-[300px] w-full">
         <ResponsiveLine
           data={transformedData}
-          margin={{ top: 50, right: 20, bottom: 50, left: 50 }}
+          margin={{ top: 50, right: 20, bottom: 50, left: 60 }}
           xScale={{ type: 'point' }}
           yScale={{
             type: 'linear',
@@ -143,8 +143,11 @@ const EconomicChart = ({ title: initialTitle, subtitle, data, color = "#6E59A5",
             tickPadding: 5,
             tickRotation: 0,
             legend: 'Value',
-            legendOffset: -40,
-            legendPosition: 'start'
+            legendOffset: -50,
+            legendPosition: 'middle',
+            format: (value) => Number(value).toLocaleString(undefined, {
+              maximumFractionDigits: 1
+            })
           }}
           pointSize={10}
           pointColor={{ theme: 'background' }}
@@ -158,6 +161,9 @@ const EconomicChart = ({ title: initialTitle, subtitle, data, color = "#6E59A5",
           enablePoints={showLabels}
           enablePointLabel={showLabels}
           pointLabelYOffset={-12}
+          pointLabel={d => Number(d.y).toLocaleString(undefined, {
+            maximumFractionDigits: 1
+          })}
           theme={{
             axis: {
               ticks: {
