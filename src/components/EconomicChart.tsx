@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Input } from "./ui/input";
 import { Slider } from "./ui/slider";
+import { Switch } from "./ui/switch";
+import { Label } from "./ui/label";
 
 interface DataPoint {
   date: string;
@@ -19,11 +21,13 @@ interface EconomicChartProps {
   isEditable?: boolean;
 }
 
-const EconomicChart = ({ title, subtitle, data, color = "#6E59A5", isEditable = false }: EconomicChartProps) => {
+const EconomicChart = ({ title: initialTitle, subtitle, data, color = "#6E59A5", isEditable = false }: EconomicChartProps) => {
   const [chartColor, setChartColor] = useState(color);
   const [yMin, setYMin] = useState<string>('auto');
   const [yMax, setYMax] = useState<string>('auto');
   const [dateRange, setDateRange] = useState<number[]>([0, data.length]);
+  const [showLabels, setShowLabels] = useState(false);
+  const [title, setTitle] = useState(initialTitle);
 
   // Filter data based on date range
   const filteredData = data.slice(dateRange[0], dateRange[1]);
@@ -40,7 +44,16 @@ const EconomicChart = ({ title, subtitle, data, color = "#6E59A5", isEditable = 
 
   return (
     <Card className={`p-4 ${isEditable ? 'border-primary' : ''}`}>
-      <h3 className="text-lg font-semibold mb-2">{title}</h3>
+      {isEditable ? (
+        <Input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="text-lg font-semibold mb-2 border-none p-0 h-auto focus-visible:ring-0"
+        />
+      ) : (
+        <h3 className="text-lg font-semibold mb-2">{title}</h3>
+      )}
       <p className="text-sm text-gray-600 mb-4">{subtitle}</p>
       {isEditable && (
         <div className="space-y-4 mb-4">
@@ -72,6 +85,14 @@ const EconomicChart = ({ title, subtitle, data, color = "#6E59A5", isEditable = 
                   className="w-24"
                 />
               </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="show-labels"
+                checked={showLabels}
+                onCheckedChange={setShowLabels}
+              />
+              <Label htmlFor="show-labels">Show Labels</Label>
             </div>
           </div>
           <div>
@@ -134,6 +155,9 @@ const EconomicChart = ({ title, subtitle, data, color = "#6E59A5", isEditable = 
           enableArea={true}
           areaOpacity={0.1}
           colors={[chartColor]}
+          enablePoints={showLabels}
+          enablePointLabels={showLabels}
+          pointLabelYOffset={-12}
           theme={{
             axis: {
               ticks: {
@@ -150,6 +174,7 @@ const EconomicChart = ({ title, subtitle, data, color = "#6E59A5", isEditable = 
           }}
         />
       </div>
+      <p className="text-xs text-gray-500 mt-2 text-right">Source: Federal Reserve Economic Data (FRED)</p>
     </Card>
   );
 };
