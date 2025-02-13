@@ -156,7 +156,7 @@ const EconomicChart = ({ title: initialTitle, subtitle, data, color = "#6E59A5",
           areaOpacity={0.1}
           colors={[chartColor]}
           enablePoints={showLabels}
-          enablePointLabels={showLabels}
+          enablePointLabel={showLabels}
           pointLabelYOffset={-12}
           theme={{
             axis: {
