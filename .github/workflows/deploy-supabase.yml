@@ -14,16 +14,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18  # Use Node.js 18 or later
+      - name: Install Rust (Required for Supabase CLI)
+        uses: dtolnay/rust-toolchain@stable  # ✅ Installs Rust
 
-      - name: Install Supabase CLI via npm
-        run: npm install -g supabase  # ✅ Installs Supabase CLI globally
+      - name: Install Supabase CLI via Cargo
+        run: |
+          cargo install supabase --locked  # ✅ Official recommended install method
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH  # ✅ Add Supabase CLI to PATH
 
       - name: Verify Supabase CLI Installation
-        run: supabase --version  # ✅ Checks if Supabase CLI is installed
+        run: supabase --version  # ✅ Debugging step to check if CLI is installed
 
       - name: Set up environment variables
         run: |
