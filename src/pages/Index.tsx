@@ -1,6 +1,7 @@
 import EconomicChart from "@/components/EconomicChart";
 import { Button } from "@/components/ui/button";
 import { LogIn, UserPlus } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 // Placeholder data until Supabase integration
 const generatePlaceholderData = (points: number, baseValue: number, volatility: number) => {
@@ -45,13 +46,41 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* First row with info and editable chart */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <Card className="p-6">
+            <h2 className="text-2xl font-semibold mb-4">Visualize Economic Data</h2>
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium text-primary">Basic (Free)</h3>
+                <ul className="list-disc list-inside text-gray-600 ml-4">
+                  <li>Access to key economic indicators</li>
+                  <li>Basic visualization options</li>
+                  <li>Monthly data updates</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-primary">Premium</h3>
+                <ul className="list-disc list-inside text-gray-600 ml-4">
+                  <li>Advanced customization tools</li>
+                  <li>Real-time data updates</li>
+                  <li>Export data in multiple formats</li>
+                  <li>API access</li>
+                </ul>
+              </div>
+            </div>
+          </Card>
           <EconomicChart
-            title="GDP Growth Rate"
-            subtitle="Quarterly, Seasonally Adjusted"
+            title="Interactive GDP Chart"
+            subtitle="Try our interactive features"
             data={gdpData}
             color="#6E59A5"
+            isEditable={true}
           />
+        </div>
+
+        {/* Additional charts */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <EconomicChart
             title="Inflation Rate"
             subtitle="Monthly, Year-over-Year"
@@ -63,12 +92,6 @@ const Index = () => {
             subtitle="Monthly, Seasonally Adjusted"
             data={unemploymentData}
             color="#7E69AB"
-          />
-          <EconomicChart
-            title="Federal Funds Rate"
-            subtitle="Daily, Effective Rate"
-            data={interestRateData}
-            color="#D6BCFA"
           />
         </div>
       </div>

@@ -1,5 +1,6 @@
+
 import { Card } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { ResponsiveLine } from '@nivo/line';
 
 interface DataPoint {
   date: string;
@@ -11,43 +12,72 @@ interface EconomicChartProps {
   subtitle: string;
   data: DataPoint[];
   color?: string;
+  isEditable?: boolean;
 }
 
-const EconomicChart = ({ title, subtitle, data, color = "#6E59A5" }: EconomicChartProps) => {
+const EconomicChart = ({ title, subtitle, data, color = "#6E59A5", isEditable = false }: EconomicChartProps) => {
+  // Transform data for Nivo format
+  const transformedData = [{
+    id: title,
+    color: color,
+    data: data.map(d => ({
+      x: d.date,
+      y: d.value
+    }))
+  }];
+
   return (
-    <Card className="chart-container">
+    <Card className={`chart-container ${isEditable ? 'border-primary' : ''}`}>
       <h3 className="chart-title">{title}</h3>
       <p className="chart-subtitle">{subtitle}</p>
       <div className="h-[300px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis 
-              dataKey="date" 
-              tick={{ fill: '#666' }}
-              tickLine={{ stroke: '#666' }}
-            />
-            <YAxis 
-              tick={{ fill: '#666' }}
-              tickLine={{ stroke: '#666' }}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: 'white',
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-              }}
-            />
-            <Line 
-              type="monotone" 
-              dataKey="value" 
-              stroke={color}
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 6 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <ResponsiveLine
+          data={transformedData}
+          margin={{ top: 20, right: 20, bottom: 50, left: 50 }}
+          xScale={{ type: 'point' }}
+          yScale={{ type: 'linear', min: 'auto', max: 'auto', stacked: false, reverse: false }}
+          curve="natural"
+          axisTop={null}
+          axisRight={null}
+          axisBottom={{
+            tickSize: 5,
+            tickPadding: 5,
+            tickRotation: -45,
+            legend: 'Date',
+            legendOffset: 40,
+            legendPosition: 'middle'
+          }}
+          axisLeft={{
+            tickSize: 5,
+            tickPadding: 5,
+            tickRotation: 0,
+            legend: 'Value',
+            legendOffset: -40,
+            legendPosition: 'middle'
+          }}
+          pointSize={0}
+          pointColor={{ theme: 'background' }}
+          pointBorderWidth={2}
+          pointBorderColor={{ from: 'serieColor' }}
+          enableSlices="x"
+          enableArea={true}
+          areaOpacity={0.1}
+          colors={[color]}
+          theme={{
+            axis: {
+              ticks: {
+                text: {
+                  fill: '#666'
+                }
+              },
+              legend: {
+                text: {
+                  fill: '#666'
+                }
+              }
+            }
+          }}
+        />
       </div>
     </Card>
   );
