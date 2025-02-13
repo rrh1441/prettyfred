@@ -1,0 +1,26 @@
+name: Deploy Supabase Functions
+
+on:
+  push:
+    branches:
+      - main  # Triggers deployment on every push to `main`
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: Actions  # 👈 Ensure this matches your GitHub Environment name!
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Supabase CLI
+        run: curl -fsSL https://supabase.com/cli/install | sh
+
+      - name: Set up environment variables
+        run: |
+          supabase secrets set SERVICE_ROLE="${{ secrets.SERVICE_ROLE }}"
+          supabase secrets set URL="${{ secrets.URL }}"
+          supabase secrets set FRED_API_KEY="${{ secrets.FRED_API_KEY }}"
+
+      - name: Deploy Supabase Function
+        run: supabase functions deploy fetch_fred_data --no-verify-jwt
