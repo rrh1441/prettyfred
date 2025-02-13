@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { ResponsiveLine } from '@nivo/line';
 import { Button } from "@/components/ui/button";
@@ -161,9 +160,7 @@ const EconomicChart = ({ title: initialTitle, subtitle, data, color = "#6E59A5",
           enablePoints={showLabels}
           enablePointLabel={showLabels}
           pointLabelYOffset={-12}
-          pointLabel={d => Number(d.y).toLocaleString(undefined, {
-            maximumFractionDigits: 1
-          })}
+          pointLabel="y"
           theme={{
             axis: {
               ticks: {
