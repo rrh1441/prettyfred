@@ -4,6 +4,7 @@ import { ResponsiveLine } from '@nivo/line';
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Input } from "./ui/input";
+import { Slider } from "./ui/slider";
 
 interface DataPoint {
   date: string;
@@ -22,11 +23,10 @@ const EconomicChart = ({ title, subtitle, data, color = "#6E59A5", isEditable = 
   const [chartColor, setChartColor] = useState(color);
   const [yMin, setYMin] = useState<string>('auto');
   const [yMax, setYMax] = useState<string>('auto');
-  const [startDate, setStartDate] = useState<number>(0);
-  const [endDate, setEndDate] = useState<number>(data.length);
+  const [dateRange, setDateRange] = useState<number[]>([0, data.length]);
 
   // Filter data based on date range
-  const filteredData = data.slice(startDate, endDate);
+  const filteredData = data.slice(dateRange[0], dateRange[1]);
 
   // Transform data for Nivo format
   const transformedData = [{
@@ -76,22 +76,15 @@ const EconomicChart = ({ title, subtitle, data, color = "#6E59A5", isEditable = 
           </div>
           <div>
             <label className="text-sm text-gray-600 block mb-1">Date Range</label>
-            <div className="flex gap-2">
-              <Input
-                type="range"
+            <div className="px-2">
+              <Slider
+                defaultValue={[0, data.length]}
+                value={dateRange}
                 min={0}
-                max={data.length - 1}
-                value={startDate}
-                onChange={(e) => setStartDate(Number(e.target.value))}
-                className="w-full"
-              />
-              <Input
-                type="range"
-                min={startDate + 1}
                 max={data.length}
-                value={endDate}
-                onChange={(e) => setEndDate(Number(e.target.value))}
-                className="w-full"
+                step={1}
+                onValueChange={(value) => setDateRange(value)}
+                className="my-4"
               />
             </div>
             <div className="flex justify-between text-sm text-gray-600 mt-1">
@@ -104,7 +97,7 @@ const EconomicChart = ({ title, subtitle, data, color = "#6E59A5", isEditable = 
       <div className="h-[300px] w-full">
         <ResponsiveLine
           data={transformedData}
-          margin={{ top: 20, right: 20, bottom: 50, left: 50 }}
+          margin={{ top: 50, right: 20, bottom: 50, left: 50 }}
           xScale={{ type: 'point' }}
           yScale={{
             type: 'linear',
@@ -130,7 +123,8 @@ const EconomicChart = ({ title, subtitle, data, color = "#6E59A5", isEditable = 
             tickRotation: 0,
             legend: 'Value',
             legendOffset: -40,
-            legendPosition: 'middle'
+            legendPosition: 'start',
+            legendAlign: 'start'
           }}
           pointSize={10}
           pointColor={{ theme: 'background' }}
