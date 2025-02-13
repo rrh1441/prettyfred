@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { ResponsiveLine } from '@nivo/line';
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { Input } from "./ui/input";
 
 interface DataPoint {
   date: string;
@@ -17,35 +18,21 @@ interface EconomicChartProps {
   isEditable?: boolean;
 }
 
-const EconomicChart = ({ title, subtitle, data: initialData, color = "#6E59A5", isEditable = false }: EconomicChartProps) => {
-  const [data, setData] = useState(initialData);
-  const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
+const EconomicChart = ({ title, subtitle, data, color = "#6E59A5", isEditable = false }: EconomicChartProps) => {
+  const [chartColor, setChartColor] = useState(color);
+  const [yMin, setYMin] = useState<string>('auto');
+  const [yMax, setYMax] = useState<string>('auto');
+  const [startDate, setStartDate] = useState<number>(0);
+  const [endDate, setEndDate] = useState<number>(data.length);
 
-  const handleClick = (point: any, event: any) => {
-    if (!isEditable) return;
-    
-    const index = data.findIndex(d => d.date === point.data.x);
-    setSelectedPoint(index);
-  };
-
-  const adjustValue = (amount: number) => {
-    if (selectedPoint === null) return;
-    
-    setData(prevData => {
-      const newData = [...prevData];
-      newData[selectedPoint] = {
-        ...newData[selectedPoint],
-        value: newData[selectedPoint].value + amount
-      };
-      return newData;
-    });
-  };
+  // Filter data based on date range
+  const filteredData = data.slice(startDate, endDate);
 
   // Transform data for Nivo format
   const transformedData = [{
     id: title,
-    color: color,
-    data: data.map(d => ({
+    color: chartColor,
+    data: filteredData.map(d => ({
       x: d.date,
       y: d.value
     }))
@@ -55,56 +42,77 @@ const EconomicChart = ({ title, subtitle, data: initialData, color = "#6E59A5", 
     <Card className={`p-4 ${isEditable ? 'border-primary' : ''}`}>
       <h3 className="text-lg font-semibold mb-2">{title}</h3>
       <p className="text-sm text-gray-600 mb-4">{subtitle}</p>
-      {isEditable && selectedPoint !== null && (
-        <div className="flex gap-2 mb-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => adjustValue(-100)}
-          >
-            -100
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => adjustValue(-10)}
-          >
-            -10
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => adjustValue(10)}
-          >
-            +10
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => adjustValue(100)}
-          >
-            +100
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSelectedPoint(null)}
-          >
-            Done
-          </Button>
+      {isEditable && (
+        <div className="space-y-4 mb-4">
+          <div className="flex gap-4 items-center">
+            <div>
+              <label className="text-sm text-gray-600 block mb-1">Color</label>
+              <Input
+                type="color"
+                value={chartColor}
+                onChange={(e) => setChartColor(e.target.value)}
+                className="w-20 h-8"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600 block mb-1">Y-Axis Range</label>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="Min"
+                  value={yMin}
+                  onChange={(e) => setYMin(e.target.value)}
+                  className="w-24"
+                />
+                <Input
+                  type="text"
+                  placeholder="Max"
+                  value={yMax}
+                  onChange={(e) => setYMax(e.target.value)}
+                  className="w-24"
+                />
+              </div>
+            </div>
+          </div>
+          <div>
+            <label className="text-sm text-gray-600 block mb-1">Date Range</label>
+            <div className="flex gap-2">
+              <Input
+                type="range"
+                min={0}
+                max={data.length - 1}
+                value={startDate}
+                onChange={(e) => setStartDate(Number(e.target.value))}
+                className="w-full"
+              />
+              <Input
+                type="range"
+                min={startDate + 1}
+                max={data.length}
+                value={endDate}
+                onChange={(e) => setEndDate(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+            <div className="flex justify-between text-sm text-gray-600 mt-1">
+              <span>{filteredData[0]?.date}</span>
+              <span>{filteredData[filteredData.length - 1]?.date}</span>
+            </div>
+          </div>
         </div>
-      )}
-      {isEditable && selectedPoint === null && (
-        <p className="text-sm text-muted-foreground mb-4">
-          Click any point on the chart to edit its value
-        </p>
       )}
       <div className="h-[300px] w-full">
         <ResponsiveLine
           data={transformedData}
           margin={{ top: 20, right: 20, bottom: 50, left: 50 }}
           xScale={{ type: 'point' }}
-          yScale={{ type: 'linear', min: 'auto', max: 'auto', stacked: false, reverse: false }}
+          yScale={{
+            type: 'linear',
+            min: yMin === 'auto' ? 'auto' : Number(yMin),
+            max: yMax === 'auto' ? 'auto' : Number(yMax),
+            stacked: false,
+            reverse: false
+          }}
           curve="natural"
           axisTop={null}
           axisRight={null}
@@ -130,10 +138,9 @@ const EconomicChart = ({ title, subtitle, data: initialData, color = "#6E59A5", 
           pointBorderColor={{ from: 'serieColor' }}
           enableSlices={false}
           useMesh={true}
-          onClick={handleClick}
           enableArea={true}
           areaOpacity={0.1}
-          colors={[color]}
+          colors={[chartColor]}
           theme={{
             axis: {
               ticks: {
