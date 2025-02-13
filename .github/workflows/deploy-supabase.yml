@@ -3,18 +3,23 @@ name: Deploy Supabase Functions
 on:
   push:
     branches:
-      - main  # Triggers deployment on every push to `main`
+      - main  # Runs when code is pushed to `main`
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: Actions  # 👈 Ensure this matches your GitHub Environment name!
+    environment: Actions  # 👈 This ensures secrets are pulled from your GitHub Actions environment
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Supabase CLI
-        run: curl -fsSL https://supabase.com/cli/install | sh
+      - name: Install Supabase CLI  # 👈 Correct installation method
+        run: |
+          curl -fsSL https://supabase.com/cli/install | sh
+          echo "$HOME/.supabase/bin" >> $GITHUB_PATH
+
+      - name: Verify Supabase CLI is Installed  # 👈 Debugging step
+        run: supabase --version
 
       - name: Set up environment variables
         run: |
