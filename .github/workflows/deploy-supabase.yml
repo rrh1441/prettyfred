@@ -27,13 +27,11 @@ jobs:
 
       - name: Log in to Supabase
         run: supabase login --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
-        #        ^ This uses the personal token you set in GitHub Secrets
 
       - name: Link to Supabase project
-        run: supabase link --project-ref <YOUR_PROJECT_REF>
-        # Replace <YOUR_PROJECT_REF> with the reference found in 
-        # your dashboard (Project Settings → General → Project Reference).
-        # Example: 'ltiuuauafphpwewqktdv'
+        run: supabase link --project-ref ltiuuauafphpwewqktdv
+        # ^ REPLACE with your exact Project Ref (no angle brackets).
+        # e.g. supabase link --project-ref abcdxyzeabz
 
       - name: Set up environment variables
         run: |
