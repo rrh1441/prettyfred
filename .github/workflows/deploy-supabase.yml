@@ -3,27 +3,37 @@ name: Deploy Supabase Functions
 on:
   push:
     branches:
-      - main  # Runs when code is pushed to `main`
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: Actions  # 👈 Ensures secrets are pulled from GitHub Actions
+    environment: Actions
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Install Rust (Required for Supabase CLI)
-        uses: dtolnay/rust-toolchain@stable  # ✅ Installs Rust
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Install Supabase CLI via Cargo
         run: |
-          cargo install supabase --locked  # ✅ Official recommended install method
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH  # ✅ Add Supabase CLI to PATH
+          cargo install supabase --locked
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
       - name: Verify Supabase CLI Installation
-        run: supabase --version  # ✅ Debugging step to check if CLI is installed
+        run: supabase --version
+
+      - name: Log in to Supabase
+        run: supabase login --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
+        #        ^ This uses the personal token you set in GitHub Secrets
+
+      - name: Link to Supabase project
+        run: supabase link --project-ref <YOUR_PROJECT_REF>
+        # Replace <YOUR_PROJECT_REF> with the reference found in 
+        # your dashboard (Project Settings → General → Project Reference).
+        # Example: 'ltiuuauafphpwewqktdv'
 
       - name: Set up environment variables
         run: |
