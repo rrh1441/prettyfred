@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { LogIn, UserPlus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
-// Placeholder data until Supabase integration
+// Placeholder data until Supabase  integration asdgadsgad
 const generatePlaceholderData = (points: number, baseValue: number, volatility: number) => {
   const data = [];
   for (let i = 0; i < points; i++) {
@@ -16,7 +16,7 @@ const generatePlaceholderData = (points: number, baseValue: number, volatility: 
   }
   return data;
 };
-
+// Placeholder data until Supabase  integration asdgadsgad
 const gdpData = generatePlaceholderData(24, 20000, 500);
 const inflationData = generatePlaceholderData(24, 3, 0.5);
 const unemploymentData = generatePlaceholderData(24, 5, 0.3);
