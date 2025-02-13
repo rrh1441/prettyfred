@@ -14,14 +14,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Supabase CLI
-        run: |
-          curl -fsSL https://supabase.com/cli/install | sh
-          echo "$HOME/.supabase/bin" >> $GITHUB_PATH  # Ensure CLI is in PATH
-          export PATH="$HOME/.supabase/bin:$PATH"    # Apply PATH change
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18  # Use Node.js 18 or later
+
+      - name: Install Supabase CLI via npm
+        run: npm install -g supabase  # ✅ Installs Supabase CLI globally
 
       - name: Verify Supabase CLI Installation
-        run: supabase --version  # 👈 Check if CLI is installed properly
+        run: supabase --version  # ✅ Checks if Supabase CLI is installed
 
       - name: Set up environment variables
         run: |
