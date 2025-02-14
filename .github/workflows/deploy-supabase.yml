@@ -10,33 +10,45 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1) Check out your code
       - uses: actions/checkout@v3
 
+      # 2) Install Rust (needed for cargo)
       - uses: dtolnay/rust-toolchain@stable
 
+      # 3) Install the real Supabase CLI from GitHub
       - name: Install Supabase CLI
         run: |
-          cargo install supabase --locked
+          cargo install --git https://github.com/supabase/cli --locked
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-      - name: CLI version check
+      # 4) Verify which 'supabase' is installed
+      - name: Which supabase
+        run: which -a supabase || echo "No supabase found in PATH"
+
+      # 5) Show CLI version (should no longer say "Hello, world!")
+      - name: Check CLI version
         run: $HOME/.cargo/bin/supabase --version
 
-      - name: Login to Supabase
+      # 6) Log in to Supabase
+      - name: Log in
         run: $HOME/.cargo/bin/supabase login --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
 
+      # 7) Link to your project (replace ltiuuauafphpwewqktdv with your real project ref)
       - name: Link project
         run: $HOME/.cargo/bin/supabase link --project-ref ltiuuauafphpwewqktdv
-        # ^ replace with your actual project ref if different
 
+      # 8) Set environment secrets
       - name: Set environment secrets
         run: |
           $HOME/.cargo/bin/supabase secrets set SERVICE_ROLE="${{ secrets.SERVICE_ROLE }}"
           $HOME/.cargo/bin/supabase secrets set URL="${{ secrets.URL }}"
           $HOME/.cargo/bin/supabase secrets set FRED_API_KEY="${{ secrets.FRED_API_KEY }}"
 
+      # 9) Deploy the edge function
       - name: Deploy function
         run: $HOME/.cargo/bin/supabase functions deploy fetch_fred_data --no-verify-jwt
 
+      # 10) List functions for confirmation
       - name: List functions
         run: $HOME/.cargo/bin/supabase functions list
