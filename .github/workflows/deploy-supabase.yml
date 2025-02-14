@@ -10,51 +10,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Check out repo
+      # 1. Check out your code
       - uses: actions/checkout@v3
 
-      # 2. Ensure jq is installed (for parsing JSON)
-      - name: Install jq
+      # 2. Download & install the official Supabase CLI (latest prebuilt release for Linux)
+      - name: Install Supabase CLI
         run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
-
-      # 3. Download & install the official Supabase CLI (latest version)
-      - name: Install Supabase CLI (Official Binary)
-        run: |
-          # Grab the latest release tag, e.g. "v1.70.0"
-          VERSION="$(curl -s https://api.github.com/repos/supabase/cli/releases/latest | jq -r '.tag_name')"
-          echo "Latest Supabase CLI version is $VERSION"
-          
-          # Download & extract the linux_amd64 tar to /tmp
-          curl -L "https://github.com/supabase/cli/releases/download/$VERSION/supabase_${VERSION#v}_linux_amd64.tar.gz" \
+          curl -L "https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz" \
             | tar xz -C /tmp
-          
-          # Move supabase binary into /usr/local/bin
           sudo mv /tmp/supabase /usr/local/bin/supabase
           
-          # Check version - should print "supabase-cli version X.Y.Z"
+          # Check the CLI version - should output "supabase-cli version x.y.z"
           supabase --version
 
-      # 4. Log in using your personal access token
+      # 3. Log in with your personal access token
       - name: Log in to Supabase
         run: supabase login --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
 
-      # 5. Link your project (replace with your real project ref if needed)
+      # 4. Link to your specific project (replace with your actual project ref if different)
       - name: Link Supabase Project
         run: supabase link --project-ref ltiuuauafphpwewqktdv
 
-      # 6. Set environment secrets
-      - name: Set environment variables
+      # 5. Set environment variables for the Edge Function
+      - name: Set environment secrets
         run: |
           supabase secrets set SERVICE_ROLE="${{ secrets.SERVICE_ROLE }}"
           supabase secrets set URL="${{ secrets.URL }}"
           supabase secrets set FRED_API_KEY="${{ secrets.FRED_API_KEY }}"
 
-      # 7. Deploy the 'fetch_fred_data' Edge Function
+      # 6. Deploy the 'fetch_fred_data' Edge Function
       - name: Deploy Supabase Function
         run: supabase functions deploy fetch_fred_data --no-verify-jwt
 
-      # 8. List functions (debugging confirmation)
+      # 7. List functions for confirmation
       - name: List Supabase Functions
         run: supabase functions list
