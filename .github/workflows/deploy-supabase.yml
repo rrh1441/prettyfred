@@ -8,18 +8,35 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
+
       - uses: dtolnay/rust-toolchain@stable
-      - run: |
+
+      - name: Install Supabase CLI
+        run: |
           cargo install supabase --locked
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-      - run: supabase --version
-      - run: supabase login --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
-      - run: supabase link --project-ref ltiuuauafphpwewqktdv
-      - run: |
-          supabase secrets set SERVICE_ROLE="${{ secrets.SERVICE_ROLE }}"
-          supabase secrets set URL="${{ secrets.URL }}"
-          supabase secrets set FRED_API_KEY="${{ secrets.FRED_API_KEY }}"
-      - run: supabase functions deploy fetch_fred_data --no-verify-jwt
-      - run: supabase functions list
+
+      - name: CLI version check
+        run: $HOME/.cargo/bin/supabase --version
+
+      - name: Login to Supabase
+        run: $HOME/.cargo/bin/supabase login --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
+
+      - name: Link project
+        run: $HOME/.cargo/bin/supabase link --project-ref ltiuuauafphpwewqktdv
+        # ^ replace with your actual project ref if different
+
+      - name: Set environment secrets
+        run: |
+          $HOME/.cargo/bin/supabase secrets set SERVICE_ROLE="${{ secrets.SERVICE_ROLE }}"
+          $HOME/.cargo/bin/supabase secrets set URL="${{ secrets.URL }}"
+          $HOME/.cargo/bin/supabase secrets set FRED_API_KEY="${{ secrets.FRED_API_KEY }}"
+
+      - name: Deploy function
+        run: $HOME/.cargo/bin/supabase functions deploy fetch_fred_data --no-verify-jwt
+
+      - name: List functions
+        run: $HOME/.cargo/bin/supabase functions list
