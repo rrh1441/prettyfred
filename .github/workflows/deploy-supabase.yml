@@ -13,42 +13,41 @@ jobs:
       # 1) Check out your code
       - uses: actions/checkout@v3
 
-      # 2) Install Rust (needed for cargo)
-      - uses: dtolnay/rust-toolchain@stable
-
-      # 3) Install the real Supabase CLI from GitHub
-      - name: Install Supabase CLI
+      # 2) Download & install the official Supabase CLI (latest version)
+      - name: Install Supabase CLI (Official Binary)
         run: |
-          cargo install --git https://github.com/supabase/cli --locked
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          VERSION="$(curl -s https://api.github.com/repos/supabase/cli/releases/latest | grep tag_name | cut -d '\"' -f4)"
+          echo "Latest Supabase CLI version is $VERSION"
+          
+          # Download & extract the linux_amd64 tar to /tmp
+          curl -L "https://github.com/supabase/cli/releases/download/$VERSION/supabase_${VERSION#v}_linux_amd64.tar.gz" \
+            | tar xz -C /tmp
+          
+          # Move supabase binary into /usr/local/bin
+          sudo mv /tmp/supabase /usr/local/bin/supabase
+          
+          # Check version
+          supabase --version
 
-      # 4) Verify which 'supabase' is installed
-      - name: Which supabase
-        run: which -a supabase || echo "No supabase found in PATH"
+      # 3) Log in using your personal access token
+      - name: Log in to Supabase
+        run: supabase login --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
 
-      # 5) Show CLI version (should no longer say "Hello, world!")
-      - name: Check CLI version
-        run: $HOME/.cargo/bin/supabase --version
+      # 4) Link to your project (replace with your actual project ref if different)
+      - name: Link to Supabase project
+        run: supabase link --project-ref ltiuuauafphpwewqktdv
 
-      # 6) Log in to Supabase
-      - name: Log in
-        run: $HOME/.cargo/bin/supabase login --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
-
-      # 7) Link to your project (replace ltiuuauafphpwewqktdv with your real project ref)
-      - name: Link project
-        run: $HOME/.cargo/bin/supabase link --project-ref ltiuuauafphpwewqktdv
-
-      # 8) Set environment secrets
-      - name: Set environment secrets
+      # 5) Set environment secrets for the Edge Function
+      - name: Set environment variables
         run: |
-          $HOME/.cargo/bin/supabase secrets set SERVICE_ROLE="${{ secrets.SERVICE_ROLE }}"
-          $HOME/.cargo/bin/supabase secrets set URL="${{ secrets.URL }}"
-          $HOME/.cargo/bin/supabase secrets set FRED_API_KEY="${{ secrets.FRED_API_KEY }}"
+          supabase secrets set SERVICE_ROLE="${{ secrets.SERVICE_ROLE }}"
+          supabase secrets set URL="${{ secrets.URL }}"
+          supabase secrets set FRED_API_KEY="${{ secrets.FRED_API_KEY }}"
 
-      # 9) Deploy the edge function
-      - name: Deploy function
-        run: $HOME/.cargo/bin/supabase functions deploy fetch_fred_data --no-verify-jwt
+      # 6) Deploy your 'fetch_fred_data' Edge Function
+      - name: Deploy Supabase Function
+        run: supabase functions deploy fetch_fred_data --no-verify-jwt
 
-      # 10) List functions for confirmation
-      - name: List functions
-        run: $HOME/.cargo/bin/supabase functions list
+      # 7) List functions (for debugging to confirm the function is deployed)
+      - name: List Supabase Functions
+        run: supabase functions list
