@@ -4,7 +4,7 @@
 
 **URL**: https://lovable.dev/projects/4c33d4d5-cb6b-423a-9e0d-34556176dbea
 
-## How can I edit this code?
+## How can I edid    t this code?
 
 There are several ways of editing your application.
 
@@ -68,4 +68,5 @@ Simply open [Lovable](https://lovable.dev/projects/4c33d4d5-cb6b-423a-9e0d-34556
 
 We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
 # Force a new commit
+# Force new run
 # Force new run
