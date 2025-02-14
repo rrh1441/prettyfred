@@ -7,49 +7,19 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest  # A GitHub-hosted VM, no Docker from your side
-
+    runs-on: ubuntu-latest
     steps:
-      # 1. Checkout your repo
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # 2. Install Rust (for supabase CLI)
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      # 3. Install Supabase CLI
-      - name: Install Supabase CLI
-        run: |
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - run: |
           cargo install supabase --locked
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-      # 4. Verify CLI version
-      - name: Verify Supabase CLI
-        run: supabase --version
-
-      # 5. Log in to Supabase with your personal token (repo secret)
-      - name: Log in to Supabase
-        run: supabase login --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
-
-      # 6. Link to your project by ID/ref
-      #    (Replace "ltiuuauafphpwewqktdv" with your real project ref, if different)
-      - name: Link to Supabase project
-        run: supabase link --project-ref ltiuuauafphpwewqktdv
-
-      # 7. (Optional) Debug: list your function folder
-      - name: List function folder
-        run: |
-          echo "Supabase Edge Function contents:"
-          ls -al supabase/functions/fetch_fred_data || true
-
-      # 8. Set environment variables for the function
-      - name: Set up environment variables
-        run: |
+      - run: supabase --version
+      - run: supabase login --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
+      - run: supabase link --project-ref ltiuuauafphpwewqktdv
+      - run: |
           supabase secrets set SERVICE_ROLE="${{ secrets.SERVICE_ROLE }}"
           supabase secrets set URL="${{ secrets.URL }}"
           supabase secrets set FRED_API_KEY="${{ secrets.FRED_API_KEY }}"
-
-      # 9. Deploy the function
-      - name: Deploy Supabase Function
-        run: supabase functions deploy fetch_fred_data --no-verify-jwt
+      - run: supabase functions deploy fetch_fred_data --no-verify-jwt
+      - run: supabase functions list
