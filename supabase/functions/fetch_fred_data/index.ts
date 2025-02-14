@@ -1,19 +1,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// This Edge Function retrieves series IDs from `economic_indicators` in chunks of 5 at a time,
-// then fetches FRED data for each series, upserting into `fred_data`.
-// We pause 5 seconds after each chunk to reduce memory/CPU usage.
+// This Edge Function handles all "economic_indicators" in chunks of 20.
+// After each chunk, it waits 5 seconds before continuing, 
+// to avoid hitting CPU/memory/time limits on your Supabase plan.
 
 serve(async () => {
   const SUPABASE_URL = Deno.env.get("URL")!;
   const SUPABASE_SERVICE_ROLE = Deno.env.get("SERVICE_ROLE")!;
   const FRED_API_KEY = Deno.env.get("FRED_API_KEY")!;
 
+  // Initialize Supabase client with Service Role
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
 
   try {
-    // 1) Fetch all economic_indicators
+    // 1) Fetch all series IDs from "economic_indicators"
     const { data: indicators, error } = await supabase
       .from("economic_indicators")
       .select("series_id");
@@ -23,57 +24,24 @@ serve(async () => {
       return new Response("No economic_indicators found.", { status: 200 });
     }
 
-    // 2) Process indicators in chunks of 5
-    const chunkSize = 5;
+    console.log(`Found ${indicators.length} series. Processing in chunks of 20, with a 5s delay after each chunk.`);
+
+    // 2) Process the indicators in chunks of 20
+    const chunkSize = 20;
     for (let i = 0; i < indicators.length; i += chunkSize) {
       const chunk = indicators.slice(i, i + chunkSize);
 
+      // Loop over each indicator in this chunk
       for (const indicator of chunk) {
         const seriesId = indicator.series_id;
-        console.log(`Fetching data for series ID: ${seriesId}`);
+        console.log(`Fetching data for: ${seriesId}`);
 
-        // Fetch from FRED
-        const response = await fetch(
+        // 2a) Fetch data from FRED
+        const resp = await fetch(
           `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${FRED_API_KEY}&file_type=json`
         );
-        const result = await response.json();
+        const result = await resp.json();
 
         if (!result.observations) {
-          console.log(`No observations for ${seriesId}, skipping.`);
-          continue;
-        }
-
-        // Map the observations for upsert
-        const observations = result.observations.map((obs: any) => ({
-          series_id: seriesId,
-          date: obs.date, 
-          value: obs.value ? parseFloat(obs.value) : null,
-        }));
-
-        // Upsert into `fred_data`
-        const { error: insertError } = await supabase
-          .from("fred_data")
-          .upsert(observations, {
-            onConflict: ["series_id", "date"],
-          });
-
-        if (insertError) {
-          console.error(`Error inserting ${seriesId}: ${insertError.message}`);
-        } else {
-          console.log(`Successfully inserted data for: ${seriesId}`);
-        }
-      }
-
-      // 3) Pause 5 seconds between each chunk
-      if (i + chunkSize < indicators.length) {
-        console.log(`Finished chunk [${i}-${i + chunkSize - 1}]. Waiting 5 seconds...`);
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-      }
-    }
-
-    return new Response("FRED data updated successfully (chunked).", { status: 200 });
-  } catch (err) {
-    console.error(err);
-    return new Response(`Error: ${err.message}`, { status: 500 });
-  }
-});
+          console.log(`No observations returned for ${seriesId}, skipping.`);
+         
