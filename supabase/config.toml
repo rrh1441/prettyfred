@@ -2,7 +2,7 @@
 # https://supabase.com/docs/guides/local-development/cli/config
 # A string used to distinguish different Supabase projects on the same host. Defaults to the
 # working directory name when running `supabase init`.
-project_id = "prettyfred"
+project_id = "ltiuuauafphpwewqktdv"
 
 [api]
 enabled = true
@@ -13,7 +13,7 @@ port = 54321
 schemas = ["public", "graphql_public"]
 # Extra schemas to add to the search_path of every request.
 extra_search_path = ["public", "extensions"]
-# The maximum number of rows returns from a view, table, or stored procedure. Limits payload size
+# The maximum number of rows returned from a view, table, or stored procedure. Limits payload size
 # for accidental or malicious requests.
 max_rows = 1000
 
@@ -258,6 +258,18 @@ policy = "oneshot"
 # Port to attach the Chrome inspector for debugging edge functions.
 inspector_port = 8083
 
+# Use these configurations to customize your Edge Function.
+# [functions.MY_FUNCTION_NAME]
+# enabled = true
+# verify_jwt = true
+# import_map = "./functions/MY_FUNCTION_NAME/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+# entrypoint = "./functions/MY_FUNCTION_NAME/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/MY_FUNCTION_NAME/*.html" ]
+
 [analytics]
 enabled = true
 port = 54327
@@ -277,44 +289,44 @@ s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
 
-# Multiple schedules each day, spaced 1 minute apart (21:20 - 21:29 UTC).
-# Each schedule calls the same "fetch_fred_data" function.
-[functions.schedule.fetch_fred_data_1]
+# Multiple daily schedules to invoke the same "fetch_fred_data" function,
+# spaced one minute apart at 21:20–21:29 UTC (adjust times as needed).
+[[functions.schedule]]
 function_name = "fetch_fred_data"
 cron = "20 21 * * *"
 
-[functions.schedule.fetch_fred_data_2]
+[[functions.schedule]]
 function_name = "fetch_fred_data"
 cron = "21 21 * * *"
 
-[functions.schedule.fetch_fred_data_3]
+[[functions.schedule]]
 function_name = "fetch_fred_data"
 cron = "22 21 * * *"
 
-[functions.schedule.fetch_fred_data_4]
+[[functions.schedule]]
 function_name = "fetch_fred_data"
 cron = "23 21 * * *"
 
-[functions.schedule.fetch_fred_data_5]
+[[functions.schedule]]
 function_name = "fetch_fred_data"
 cron = "24 21 * * *"
 
-[functions.schedule.fetch_fred_data_6]
+[[functions.schedule]]
 function_name = "fetch_fred_data"
 cron = "25 21 * * *"
 
-[functions.schedule.fetch_fred_data_7]
+[[functions.schedule]]
 function_name = "fetch_fred_data"
 cron = "26 21 * * *"
 
-[functions.schedule.fetch_fred_data_8]
+[[functions.schedule]]
 function_name = "fetch_fred_data"
 cron = "27 21 * * *"
 
-[functions.schedule.fetch_fred_data_9]
+[[functions.schedule]]
 function_name = "fetch_fred_data"
 cron = "28 21 * * *"
 
-[functions.schedule.fetch_fred_data_10]
+[[functions.schedule]]
 function_name = "fetch_fred_data"
 cron = "29 21 * * *"
