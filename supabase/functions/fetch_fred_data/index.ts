@@ -1,107 +1,116 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+/**
+ * Helper to add one day to a YYYY-MM-DD string.
+ */
+function addOneDay(dateStr: string): string {
+  const d = new Date(dateStr);
+  // Increase date by 1
+  d.setDate(d.getDate() + 1);
+  // Convert back to "YYYY-MM-DD"
+  return d.toISOString().split("T")[0];
+}
+
 serve(async () => {
   const SUPABASE_URL = Deno.env.get("URL")!;
   const SUPABASE_SERVICE_ROLE = Deno.env.get("SERVICE_ROLE")!;
   const FRED_API_KEY = Deno.env.get("FRED_API_KEY")!;
 
+  // Create a Supabase client with service role
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
 
   try {
-    // 1) Load the current offset from function_state
-    const { data: stateData, error: stateErr } = await supabase
-      .from("function_state")
-      .select("next_offset")
-      .eq("name", "fetch_fred_data_offset")
-      .single();
-
-    if (stateErr || !stateData) {
-      throw new Error(`Could not load offset state: ${stateErr?.message || "No row found"}`);
-    }
-
-    let currentOffset = stateData.next_offset ?? 0;
-    console.log(`Current offset is ${currentOffset}.`);
-
-    // We'll process 20 indicators at a time.
-    const batchSize = 20;
-
-    // 2) Fetch a subset of economic_indicators from currentOffset
-    const { data: indicators, error: indErr } = await supabase
+    // 1) Grab all indicators
+    const { data: indicators, error: indicatorsErr } = await supabase
       .from("economic_indicators")
-      .select("series_id")
-      // range(a, b) picks rows from a..b inclusive. So offset..offset+batchSize-1
-      .range(currentOffset, currentOffset + batchSize - 1);
+      .select("series_id");
 
-    if (indErr) {
-      throw new Error(`Failed to fetch indicators: ${indErr.message}`);
+    if (indicatorsErr) {
+      throw new Error(`Failed to fetch indicators: ${indicatorsErr.message}`);
     }
     if (!indicators || indicators.length === 0) {
-      // no more indicators left
-      return new Response(
-        "No more economic_indicators left to process.",
-        { status: 200 }
-      );
+      return new Response("No economic_indicators found.", { status: 200 });
     }
 
-    console.log(
-      `Fetched ${indicators.length} indicators for this invocation (offset ${currentOffset}..${currentOffset + indicators.length - 1}).`
-    );
+    console.log(`Found ${indicators.length} indicators. Chunking by 20, with 5s delay after each chunk.`);
 
-    // 3) Loop over each indicator in this batch
-    for (const indicator of indicators) {
-      const seriesId = indicator.series_id;
-      console.log(`Fetching data for series ID: ${seriesId}`);
+    // 2) Process in chunks of 20
+    const chunkSize = 20;
+    for (let i = 0; i < indicators.length; i += chunkSize) {
+      const chunk = indicators.slice(i, i + chunkSize);
 
-      // 3a) Fetch from FRED
-      const response = await fetch(
-        `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${FRED_API_KEY}&file_type=json`
-      );
-      const result = await response.json();
-      if (!result.observations) {
-        console.log(`No observations for ${seriesId}, skipping.`);
-        continue;
+      // For each indicator in this chunk
+      for (const { series_id } of chunk) {
+        console.log(`Checking new data for series_id: ${series_id}`);
+
+        // 2a) Find the most recent date we have in "fred_data"
+        const { data: latestRows, error: latestErr } = await supabase
+          .from("fred_data")
+          .select("date")
+          .eq("series_id", series_id)
+          .order("date", { ascending: false })
+          .limit(1);
+
+        if (latestErr) {
+          console.error(`Error getting latest date for ${series_id}: ${latestErr.message}`);
+          continue;
+        }
+
+        // By default, if we have no rows, let's start from "1900-01-01"
+        let observationStart = "1900-01-01";
+
+        if (latestRows && latestRows.length > 0) {
+          const lastDate = latestRows[0].date; // e.g. "2023-12-31"
+          observationStart = addOneDay(lastDate); // e.g. "2024-01-01"
+        }
+
+        console.log(`Fetching new observations for ${series_id} since ${observationStart}`);
+
+        // 2b) Fetch from FRED using observation_start
+        const fredUrl = `https://api.stlouisfed.org/fred/series/observations?series_id=${series_id}&observation_start=${observationStart}&api_key=${FRED_API_KEY}&file_type=json`;
+        const resp = await fetch(fredUrl);
+        const result = await resp.json();
+
+        if (!result.observations) {
+          console.log(`No new observations for ${series_id}.`);
+          continue;
+        }
+
+        // 2c) Upsert new observations
+        const observations = result.observations.map((obs: any) => ({
+          series_id,
+          date: obs.date,
+          value: obs.value ? parseFloat(obs.value) : null,
+        }));
+
+        if (observations.length === 0) {
+          console.log(`No new rows to upsert for ${series_id}.`);
+          continue;
+        }
+
+        const { error: upsertErr } = await supabase
+          .from("fred_data")
+          .upsert(observations, { onConflict: ["series_id", "date"] });
+
+        if (upsertErr) {
+          console.error(`Error inserting new data for ${series_id}: ${upsertErr.message}`);
+        } else {
+          console.log(`Upserted ${observations.length} new rows for ${series_id}`);
+        }
       }
 
-      // 3b) Map observations for upsert
-      const observations = result.observations.map((obs: any) => ({
-        series_id: seriesId,
-        date: obs.date,
-        value: obs.value ? parseFloat(obs.value) : null,
-      }));
+      console.log(`Finished chunk [${i}..${i + chunk.length - 1}] out of ${indicators.length} indicators. Pausing 5s...`);
 
-      // 3c) Upsert into fred_data
-      const { error: upsertErr } = await supabase
-        .from("fred_data")
-        .upsert(observations, { onConflict: ["series_id", "date"] });
-
-      if (upsertErr) {
-        console.error(`Error inserting ${seriesId}: ${upsertErr.message}`);
-      } else {
-        console.log(`Successfully inserted data for: ${seriesId}`);
+      // 3) Pause 5 seconds before next chunk, if there is one
+      if (i + chunkSize < indicators.length) {
+        await new Promise((resolve) => setTimeout(resolve, 5000));
       }
     }
 
-    // 4) Increment the offset by however many we processed
-    const newOffset = currentOffset + indicators.length;
-    console.log(`Processed ${indicators.length} series, new offset = ${newOffset}.`);
-
-    const { error: updateErr } = await supabase
-      .from("function_state")
-      .update({ next_offset: newOffset })
-      .eq("name", "fetch_fred_data_offset");
-
-    if (updateErr) {
-      console.error(`Error updating offset state: ${updateErr.message}`);
-    }
-
-    // 5) Return a message with details
-    return new Response(
-      `Fetched ${indicators.length} indicators (offset ${currentOffset}..${
-        currentOffset + indicators.length - 1
-      }). Next offset = ${newOffset}.`,
-      { status: 200 }
-    );
+    return new Response("Done fetching daily incremental data in chunked mode.", {
+      status: 200,
+    });
   } catch (err) {
     console.error(err);
     return new Response(`Error: ${err.message}`, { status: 500 });
