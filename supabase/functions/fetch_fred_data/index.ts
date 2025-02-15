@@ -6,79 +6,100 @@ serve(async () => {
   const SUPABASE_SERVICE_ROLE = Deno.env.get("SERVICE_ROLE")!;
   const FRED_API_KEY = Deno.env.get("FRED_API_KEY")!;
 
-  // Create client with Service Role
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
 
   try {
-    // 1) Fetch series IDs from "economic_indicators"
-    const { data: indicators, error } = await supabase
-      .from("economic_indicators")
-      .select("series_id");
+    // 1) Load the current offset from function_state
+    const { data: stateData, error: stateErr } = await supabase
+      .from("function_state")
+      .select("next_offset")
+      .eq("name", "fetch_fred_data_offset")
+      .single();
 
-    if (error) {
-      throw new Error(`Failed to fetch series_ids: ${error.message}`);
+    if (stateErr || !stateData) {
+      throw new Error(`Could not load offset state: ${stateErr?.message || "No row found"}`);
+    }
+
+    let currentOffset = stateData.next_offset ?? 0;
+    console.log(`Current offset is ${currentOffset}.`);
+
+    // We'll process 20 indicators at a time.
+    const batchSize = 20;
+
+    // 2) Fetch a subset of economic_indicators from currentOffset
+    const { data: indicators, error: indErr } = await supabase
+      .from("economic_indicators")
+      .select("series_id")
+      // range(a, b) picks rows from a..b inclusive. So offset..offset+batchSize-1
+      .range(currentOffset, currentOffset + batchSize - 1);
+
+    if (indErr) {
+      throw new Error(`Failed to fetch indicators: ${indErr.message}`);
     }
     if (!indicators || indicators.length === 0) {
-      return new Response("No economic_indicators found.", { status: 200 });
+      // no more indicators left
+      return new Response(
+        "No more economic_indicators left to process.",
+        { status: 200 }
+      );
     }
 
     console.log(
-      `Found ${indicators.length} series. Processing in chunks of 20 with a 5s delay.`
+      `Fetched ${indicators.length} indicators for this invocation (offset ${currentOffset}..${currentOffset + indicators.length - 1}).`
     );
 
-    // 2) Chunk size = 20
-    const chunkSize = 20;
+    // 3) Loop over each indicator in this batch
+    for (const indicator of indicators) {
+      const seriesId = indicator.series_id;
+      console.log(`Fetching data for series ID: ${seriesId}`);
 
-    // Loop over indicators in increments of chunkSize
-    for (let i = 0; i < indicators.length; i += chunkSize) {
-      const chunk = indicators.slice(i, i + chunkSize);
-
-      // Process each series in the chunk
-      for (const indicator of chunk) {
-        const seriesId = indicator.series_id;
-        console.log(`Fetching data for: ${seriesId}`);
-
-        // 2a) Fetch from FRED
-        const resp = await fetch(
-          `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${FRED_API_KEY}&file_type=json`
-        );
-        const result = await resp.json();
-
-        if (!result.observations) {
-          console.log(`No observations returned for ${seriesId}, skipping.`);
-          continue;
-        }
-
-        // 2b) Map observations for upsert
-        const observations = result.observations.map((obs: any) => ({
-          series_id: seriesId,
-          date: obs.date,
-          value: obs.value ? parseFloat(obs.value) : null,
-        }));
-
-        // 2c) Upsert into "fred_data"
-        const { error: upsertError } = await supabase
-          .from("fred_data")
-          .upsert(observations, { onConflict: ["series_id", "date"] });
-
-        if (upsertError) {
-          console.error(`Error inserting ${seriesId}: ${upsertError.message}`);
-        } else {
-          console.log(`Inserted data for: ${seriesId}`);
-        }
+      // 3a) Fetch from FRED
+      const response = await fetch(
+        `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${FRED_API_KEY}&file_type=json`
+      );
+      const result = await response.json();
+      if (!result.observations) {
+        console.log(`No observations for ${seriesId}, skipping.`);
+        continue;
       }
 
-      // 3) After each chunk, wait 5s (if not done)
-      console.log(
-        `Completed chunk covering indices [${i}..${i + chunk.length - 1}] of ${indicators.length}. Waiting 5s...`
-      );
-      if (i + chunkSize < indicators.length) {
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+      // 3b) Map observations for upsert
+      const observations = result.observations.map((obs: any) => ({
+        series_id: seriesId,
+        date: obs.date,
+        value: obs.value ? parseFloat(obs.value) : null,
+      }));
+
+      // 3c) Upsert into fred_data
+      const { error: upsertErr } = await supabase
+        .from("fred_data")
+        .upsert(observations, { onConflict: ["series_id", "date"] });
+
+      if (upsertErr) {
+        console.error(`Error inserting ${seriesId}: ${upsertErr.message}`);
+      } else {
+        console.log(`Successfully inserted data for: ${seriesId}`);
       }
     }
 
+    // 4) Increment the offset by however many we processed
+    const newOffset = currentOffset + indicators.length;
+    console.log(`Processed ${indicators.length} series, new offset = ${newOffset}.`);
+
+    const { error: updateErr } = await supabase
+      .from("function_state")
+      .update({ next_offset: newOffset })
+      .eq("name", "fetch_fred_data_offset");
+
+    if (updateErr) {
+      console.error(`Error updating offset state: ${updateErr.message}`);
+    }
+
+    // 5) Return a message with details
     return new Response(
-      "FRED data updated successfully (chunk=20, delay=5s).",
+      `Fetched ${indicators.length} indicators (offset ${currentOffset}..${
+        currentOffset + indicators.length - 1
+      }). Next offset = ${newOffset}.`,
       { status: 200 }
     );
   } catch (err) {
