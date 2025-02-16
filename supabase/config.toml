@@ -13,7 +13,7 @@ port = 54321
 schemas = ["public", "graphql_public"]
 # Extra schemas to add to the search_path of every request.
 extra_search_path = ["public", "extensions"]
-# The maximum number of rows returned from a view, table, or stored procedure. Limits payload size
+# The maximum number of rows returns from a view, table, or stored procedure. Limits payload size
 # for accidental or malicious requests.
 max_rows = 1000
 
@@ -267,8 +267,6 @@ inspector_port = 8083
 # Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
 # entrypoint = "./functions/MY_FUNCTION_NAME/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/MY_FUNCTION_NAME/*.html" ]
 
 [analytics]
 enabled = true
@@ -289,44 +287,9 @@ s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
 
-# Multiple daily schedules to invoke the same "fetch_fred_data" function,
-# spaced one minute apart at 21:20–21:29 UTC (adjust times as needed).
-[[functions.schedule]]
-function_name = "fetch_fred_data"
-cron = "20 21 * * *"
-
-[[functions.schedule]]
-function_name = "fetch_fred_data"
-cron = "21 21 * * *"
-
-[[functions.schedule]]
-function_name = "fetch_fred_data"
-cron = "22 21 * * *"
-
-[[functions.schedule]]
-function_name = "fetch_fred_data"
-cron = "23 21 * * *"
-
-[[functions.schedule]]
-function_name = "fetch_fred_data"
-cron = "24 21 * * *"
-
-[[functions.schedule]]
-function_name = "fetch_fred_data"
-cron = "25 21 * * *"
-
-[[functions.schedule]]
-function_name = "fetch_fred_data"
-cron = "26 21 * * *"
-
-[[functions.schedule]]
-function_name = "fetch_fred_data"
-cron = "27 21 * * *"
-
-[[functions.schedule]]
-function_name = "fetch_fred_data"
-cron = "28 21 * * *"
-
-[[functions.schedule]]
-function_name = "fetch_fred_data"
-cron = "29 21 * * *"
+# Final scheduling block for your fetch_fred_data function:
+# This means it runs every minute from 21:20 - 21:29 UTC daily (ten times).
+[functions.fetch_fred_data]
+enabled = true
+verify_jwt = false
+cron = "20-29 21 * * *"
