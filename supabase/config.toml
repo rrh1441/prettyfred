@@ -1,151 +1,184 @@
 # For detailed configuration reference documentation, visit:
 # https://supabase.com/docs/guides/local-development/cli/config
-# A string used to distinguish different Supabase projects on the same host. Defaults to the
-# working directory name when running `supabase init`.
+
+################################################################################
+#  PROJECT IDENTIFIER
+#  This is a unique string used to distinguish different Supabase projects on
+#  the same host. If you run `supabase init` locally, it defaults to your
+#  directory name, but to match your remote project, set it to your actual
+#  project ref from the Supabase dashboard.
+################################################################################
 project_id = "ltiuuauafphpwewqktdv"
 
+################################################################################
+#  API CONFIGURATION
+################################################################################
 [api]
+# Set enabled = true to allow the PostgREST API to run.
 enabled = true
-# Port to use for the API URL.
+
+# Port to use for the API URL locally.
 port = 54321
-# Schemas to expose in your API. Tables, views and stored procedures in this schema will get API
-# endpoints. `public` and `graphql_public` schemas are included by default.
+
+# Schemas to expose in your API. By default, "public" and "graphql_public".
 schemas = ["public", "graphql_public"]
-# Extra schemas to add to the search_path of every request.
+
+# Additional schemas to add to the PostgREST search_path, if needed.
 extra_search_path = ["public", "extensions"]
-# The maximum number of rows returns from a view, table, or stored procedure. Limits payload size
-# for accidental or malicious requests.
+
+# The maximum number of rows returned from a single request,
+# to limit payload size for accidental or malicious requests.
 max_rows = 1000
 
 [api.tls]
 # Enable HTTPS endpoints locally using a self-signed certificate.
+# Typically disabled for local dev.
 enabled = false
 
+################################################################################
+#  DATABASE CONFIGURATION
+################################################################################
 [db]
-# Port to use for the local database URL.
+# Port to use for the local Postgres database URL.
 port = 54322
-# Port used by db diff command to initialize the shadow database.
+
+# Port used by "db diff" command to initialize the shadow database.
 shadow_port = 54320
-# The database major version to use. This has to be the same as your remote database's. Run `SHOW
-# server_version;` on the remote database to check.
+
+# The database major version to use. This must match your remote db version
+# (check with SHOW server_version;).
 major_version = 15
 
 [db.pooler]
+# Connection pooler config. Often disabled in local dev.
 enabled = false
-# Port to use for the local connection pooler.
+# Port for local connection pooler
 port = 54329
-# Specifies when a server connection can be reused by other clients.
-# Configure one of the supported pooler modes: `transaction`, `session`.
+# Specifies the pooler mode: "transaction" or "session".
 pool_mode = "transaction"
-# How many server connections to allow per user/database pair.
+# Server connections to allow per user/db pair.
 default_pool_size = 20
-# Maximum number of client connections allowed.
+# Max client connections allowed.
 max_client_conn = 100
 
 # [db.vault]
 # secret_key = "env(SECRET_VALUE)"
 
+################################################################################
+#  SEED CONFIGURATION
+################################################################################
 [db.seed]
-# If enabled, seeds the database after migrations during a db reset.
+# If enabled, seeds the db after migrations during a "db reset".
 enabled = true
-# Specifies an ordered list of seed files to load during db reset.
-# Supports glob patterns relative to supabase directory: "./seeds/*.sql"
+# List of seed files to load, e.g. "supabase/seeds/*.sql"
 sql_paths = ["./seed.sql"]
 
+################################################################################
+#  REALTIME CONFIGURATION
+################################################################################
 [realtime]
 enabled = true
-# Bind realtime via either IPv4 or IPv6. (default: IPv4)
-# ip_version = "IPv6"
-# The maximum length in bytes of HTTP request headers. (default: 4096)
-# max_header_length = 4096
+# ip_version = "IPv6" # e.g. if you prefer IPv6
+# max_header_length = 4096 # default for request headers
 
+################################################################################
+#  STUDIO CONFIGURATION
+################################################################################
 [studio]
 enabled = true
-# Port to use for Supabase Studio.
+# Port for Supabase Studio
 port = 54323
-# External URL of the API server that frontend connects to.
+# External URL of the API server that the frontend connects to
 api_url = "http://127.0.0.1"
-# OpenAI API Key to use for Supabase AI in the Supabase Studio.
+# If you want to use Supabase AI in the Studio, set your OpenAI API key
 openai_api_key = "env(OPENAI_API_KEY)"
 
-# Email testing server. Emails sent with the local dev setup are not actually sent - rather, they
-# are monitored, and you can view the emails that would have been sent from the web interface.
+################################################################################
+#  INBUCKET CONFIGURATION (LOCAL DEV EMAIL TEST)
+################################################################################
 [inbucket]
 enabled = true
-# Port to use for the email testing server web interface.
+# Port for the Inbucket web interface
 port = 54324
-# Uncomment to expose additional ports for testing user applications that send emails.
+# If you want to test sending actual emails:
 # smtp_port = 54325
 # pop3_port = 54326
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+################################################################################
+#  STORAGE CONFIGURATION
+################################################################################
 [storage]
 enabled = true
-# The maximum file size allowed (e.g. "5MB", "500KB").
+# The maximum file size for uploads, e.g. "50MB"
 file_size_limit = "50MiB"
 
-# Image transformation API is available to Supabase Pro plan.
 # [storage.image_transformation]
-# enabled = true
+# enabled = true  # only on Pro plan
 
-# Uncomment to configure local storage buckets
+# Example bucket config:
 # [storage.buckets.images]
 # public = false
 # file_size_limit = "50MiB"
 # allowed_mime_types = ["image/png", "image/jpeg"]
 # objects_path = "./images"
 
+################################################################################
+#  AUTH CONFIGURATION
+################################################################################
 [auth]
 enabled = true
-# The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
-# in emails.
+# The base URL of your site, used for emails & allow-list redirects
 site_url = "http://127.0.0.1:3000"
-# A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
+
+# Additional *exact* redirect URLs that auth providers can redirect to
 additional_redirect_urls = ["https://127.0.0.1:3000"]
-# How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
+
+# How long tokens are valid (in seconds). e.g. 3600 = 1 hour, up to 604800 = 1 week
 jwt_expiry = 3600
-# If disabled, the refresh token will never expire.
+
+# If disabled, refresh tokens never expire.
 enable_refresh_token_rotation = true
-# Allows refresh tokens to be reused after expiry, up to the specified interval in seconds.
-# Requires enable_refresh_token_rotation = true.
+
+# Allows refresh tokens to be reused after expiry, up to this interval in seconds
+# (requires enable_refresh_token_rotation = true).
 refresh_token_reuse_interval = 10
-# Allow/disallow new user signups to your project.
+
+# Whether new user signups are allowed
 enable_signup = true
-# Allow/disallow anonymous sign-ins to your project.
+
+# Whether anonymous sign-ins are allowed
 enable_anonymous_sign_ins = false
-# Allow/disallow testing manual linking of accounts
+
+# Testing manual linking of accounts
 enable_manual_linking = false
-# Passwords shorter than this value will be rejected as weak. Minimum 6, recommended 8 or more.
+
+# Minimum password length (6, 8, etc.)
 minimum_password_length = 6
-# Passwords that do not meet the following requirements will be rejected as weak. Supported values
-# are: `letters_digits`, `lower_upper_letters_digits`, `lower_upper_letters_digits_symbols`
+
+# Additional password requirements (e.g. "lower_upper_letters_digits_symbols")
 password_requirements = ""
 
-# Configure one of the supported captcha providers: `hcaptcha`, `turnstile`.
-# [auth.captcha]
-# enabled = true
-# provider = "hcaptcha"
-# secret = ""
-
+################################################################################
+#  AUTH EMAIL
+################################################################################
 [auth.email]
-# Allow/disallow new user signups via email to your project.
+# Allow user signups via email
 enable_signup = true
-# If enabled, a user will be required to confirm any email change on both the old, and new email
-# addresses. If disabled, only the new email is required to confirm.
+# Double confirm changes (both old & new emails)
 double_confirm_changes = true
-# If enabled, users need to confirm their email address before signing in.
+# Email confirmation needed before signing in?
 enable_confirmations = false
-# If enabled, users will need to reauthenticate or have logged in recently to change their password.
+# Reauthentication needed for password changes?
 secure_password_change = false
-# Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
+# Minimum time between sending another signup confirmation or reset email
 max_frequency = "1s"
-# Number of characters used in the email OTP.
+# The length of the email OTP
 otp_length = 6
-# Number of seconds before the email OTP expires (defaults to 1 hour).
+# Expiry for email OTP in seconds (default 1 hour)
 otp_expiry = 3600
 
-# Use a production-ready SMTP server
 # [auth.email.smtp]
 # enabled = true
 # host = "smtp.sendgrid.net"
@@ -155,56 +188,46 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
+################################################################################
+#  AUTH SMS
+################################################################################
 [auth.sms]
-# Allow/disallow new user signups via SMS to your project.
+# Whether user signups via SMS are allowed
 enable_signup = false
-# If enabled, users need to confirm their phone number before signing in.
+# Confirm phone # before sign in?
 enable_confirmations = false
-# Template for sending OTP to users
+# Template for sending OTP
 template = "Your code is {{ .Code }}"
-# Controls the minimum amount of time that must pass before sending another sms otp.
+# Minimum time between sending another sms
 max_frequency = "5s"
 
-# Use pre-defined map of phone number to OTP for testing.
 # [auth.sms.test_otp]
 # 4152127777 = "123456"
 
-# Configure logged in session timeouts.
-# [auth.sessions]
-# Force log out after the specified duration.
-# timebox = "24h"
-# Force log out if the user has been inactive longer than the specified duration.
-# inactivity_timeout = "8h"
-
-# This hook runs before a token is issued and allows you to add additional claims based on the authentication method used.
-# [auth.hook.custom_access_token]
-# enabled = true
-# uri = "pg-functions://<database>/<schema>/<hook_name>"
-
-# Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
+################################################################################
+#  AUTH: SMS TWILIO
+################################################################################
 [auth.sms.twilio]
 enabled = false
 account_sid = ""
 message_service_sid = ""
-# DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
+# Use environment variable for real Twilio auth token
 auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 
-# Multi-factor-authentication is available to Supabase Pro plan.
+################################################################################
+#  AUTH: MFA
+################################################################################
 [auth.mfa]
-# Control how many MFA factors can be enrolled at once per user.
 max_enrolled_factors = 10
 
-# Control MFA via App Authenticator (TOTP)
 [auth.mfa.totp]
 enroll_enabled = false
 verify_enabled = false
 
-# Configure MFA via Phone Messaging
 [auth.mfa.phone]
 enroll_enabled = false
 verify_enabled = false
@@ -212,84 +235,77 @@ otp_length = 6
 template = "Your code is {{ .Code }}"
 max_frequency = "5s"
 
-# Configure MFA via WebAuthn
 # [auth.mfa.web_authn]
 # enroll_enabled = true
 # verify_enabled = true
 
-# Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
-# `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin_oidc`, `notion`, `twitch`,
-# `twitter`, `slack`, `spotify`, `workos`, `zoom`.
+################################################################################
+#  AUTH: EXTERNAL PROVIDERS
+################################################################################
 [auth.external.apple]
 enabled = false
 client_id = ""
-# DO NOT commit your OAuth provider secret to git. Use environment variable substitution instead:
 secret = "env(SUPABASE_AUTH_EXTERNAL_APPLE_SECRET)"
-# Overrides the default auth redirectUrl.
 redirect_uri = ""
-# Overrides the default auth provider URL. Used to support self-hosted gitlab, single-tenant Azure,
-# or any other third-party OIDC providers.
 url = ""
-# If enabled, the nonce check will be skipped. Required for local sign in with Google auth.
 skip_nonce_check = false
 
-# Use Firebase Auth as a third-party provider alongside Supabase Auth.
 [auth.third_party.firebase]
 enabled = false
-# project_id = "my-firebase-project"
 
-# Use Auth0 as a third-party provider alongside Supabase Auth.
 [auth.third_party.auth0]
 enabled = false
-# tenant = "my-auth0-tenant"
-# tenant_region = "us"
 
-# Use AWS Cognito (Amplify) as a third-party provider alongside Supabase Auth.
 [auth.third_party.aws_cognito]
 enabled = false
-# user_pool_id = "my-user-pool-id"
-# user_pool_region = "us-east-1"
 
+################################################################################
+#  EDGE RUNTIME CONFIG
+################################################################################
 [edge_runtime]
 enabled = true
-# Configure one of the supported request policies: `oneshot`, `per_worker`.
-# Use `oneshot` for hot reload, or `per_worker` for load testing.
+# "oneshot" for hot reload; "per_worker" for load testing
 policy = "oneshot"
-# Port to attach the Chrome inspector for debugging edge functions.
+# Inspector port for debugging edge functions
 inspector_port = 8083
 
-# Use these configurations to customize your Edge Function.
-# [functions.MY_FUNCTION_NAME]
-# enabled = true
-# verify_jwt = true
-# import_map = "./functions/MY_FUNCTION_NAME/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-# entrypoint = "./functions/MY_FUNCTION_NAME/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-
+################################################################################
+#  ANALYTICS
+################################################################################
 [analytics]
 enabled = true
 port = 54327
-# Configure one of the supported backends: `postgres`, `bigquery`.
+# "postgres" or "bigquery"
 backend = "postgres"
 
-# Experimental features may be deprecated any time
+################################################################################
+#  EXPERIMENTAL
+#  May be deprecated at any time
+################################################################################
 [experimental]
-# Configures Postgres storage engine to use OrioleDB (S3)
+# OrioleDB for S3
 orioledb_version = ""
-# Configures S3 bucket URL, eg. <bucket_name>.s3-<region>.amazonaws.com
 s3_host = "env(S3_HOST)"
-# Configures S3 bucket region, eg. us-east-1
 s3_region = "env(S3_REGION)"
-# Configures AWS_ACCESS_KEY_ID for S3 bucket
 s3_access_key = "env(S3_ACCESS_KEY)"
-# Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
 
-# Final scheduling block for your fetch_fred_data function:
-# This means it runs every minute from 21:20 - 21:29 UTC daily (ten times).
+################################################################################
+#  FUNCTIONS CONFIG
+#  Each function is configured as [functions.<function-name>].
+#  For scheduling, use `schedule.cron = "..."`
+################################################################################
+
+# This matches your function folder name: supabase/functions/fetch_fred_data
 [functions.fetch_fred_data]
-enabled = true
+# If you don't require JWT verification, set false
 verify_jwt = false
-cron = "20-29 21 * * *"
+
+# CRON expression for scheduling:
+# "20-29 21 * * *" means run at minutes 20 through 29 of hour 21 UTC, daily.
+# i.e. 21:20,21:21,...21:29 => 10 times per day, 1 minute apart.
+schedule.cron = "20-29 21 * * *"
+
+# Additional function-level config keys if needed:
+# import_map = "./functions/fetch_fred_data/deno.json"
+# static_files = ["./functions/fetch_fred_data/*.html"]
