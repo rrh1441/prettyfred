@@ -293,19 +293,9 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 ################################################################################
 #  FUNCTIONS CONFIG
 #  Each function is configured as [functions.<function-name>].
-#  For scheduling, use `schedule.cron = "..."`
+#  (We removed any scheduling lines to avoid parse errors.)
 ################################################################################
 
-# This matches your function folder name: supabase/functions/fetch_fred_data
 [functions.fetch_fred_data]
 # If you don't require JWT verification, set false
 verify_jwt = false
-
-# CRON expression for scheduling:
-# "20-29 21 * * *" means run at minutes 20 through 29 of hour 21 UTC, daily.
-# i.e. 21:20,21:21,...21:29 => 10 times per day, 1 minute apart.
-schedule.cron = "20-29 21 * * *"
-
-# Additional function-level config keys if needed:
-# import_map = "./functions/fetch_fred_data/deno.json"
-# static_files = ["./functions/fetch_fred_data/*.html"]
