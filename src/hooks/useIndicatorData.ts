@@ -1,6 +1,15 @@
-// FILE: src/hooks/useIndicatorData.ts
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabaseClient";
+
+interface IndicatorData {
+  series_id: string;
+  date: string;
+  value: number;
+  economic_indicators: {
+    description: string;
+  };
+}
 
 /**
  * This function runs a single join query:
@@ -12,9 +21,7 @@ import { supabase } from "@/lib/supabaseClient";
  *   FROM fred_data
  *   WHERE series_id = <seriesId>
  */
-async function fetchIndicatorData(seriesId: string) {
-  // `.select()` references your foreign key relationship
-  //   "economic_indicators" so we can fetch its "description" field
+async function fetchIndicatorData(seriesId: string): Promise<IndicatorData[]> {
   const { data, error } = await supabase
     .from("fred_data")
     .select(`
@@ -31,13 +38,15 @@ async function fetchIndicatorData(seriesId: string) {
   if (error) {
     throw new Error(error.message);
   }
-  return data || [];
+  return data as IndicatorData[];
 }
 
 /**
  * React Query hook that fetches from "fred_data" & "economic_indicators"
  */
 export function useIndicatorData(seriesId: string) {
-  // Return the usual { data, isLoading, error, ... }
-  return useQuery(["indicatorData", seriesId], () => fetchIndicatorData(seriesId));
+  return useQuery({
+    queryKey: ["indicatorData", seriesId],
+    queryFn: () => fetchIndicatorData(seriesId)
+  });
 }

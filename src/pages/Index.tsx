@@ -1,16 +1,24 @@
-// FILE: src/pages/Index.tsx
-
 import { Button } from "@/components/ui/button";
 import { LogIn, UserPlus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import EconomicChart from "@/components/EconomicChart";
 import { useIndicatorData } from "@/hooks/useIndicatorData";
 
+interface ChartData {
+  date: string;
+  value: number;
+}
+
+interface TransformedData {
+  data: ChartData[];
+  description: string;
+}
+
 /**
  * A helper to transform DB rows into { date: string, value: number }
  * plus a 'description' for the chart title.
  */
-function transformIndicatorData(rows: any[] | undefined) {
+function transformIndicatorData(rows: any[] | undefined): TransformedData {
   if (!rows || rows.length === 0) {
     return {
       data: [],
@@ -41,7 +49,7 @@ const Index = () => {
     isLoading: gdpc1Loading,
     error: gdpc1Error,
   } = useIndicatorData("GDPC1");
-  const gdpc1 = transformIndicatorData(gdpc1Rows);
+  const gdpc1 = transformIndicatorData(gdpc1Rows || []);
 
   //
   // 2) Fetch the other 8 series (uneditable)
@@ -51,56 +59,56 @@ const Index = () => {
     isLoading: gdpLoading,
     error: gdpError,
   } = useIndicatorData("GDP");
-  const gdp = transformIndicatorData(gdpRows);
+  const gdp = transformIndicatorData(gdpRows || []);
 
   const {
     data: unrateRows,
     isLoading: unrateLoading,
     error: unrateError,
   } = useIndicatorData("UNRATE");
-  const unrate = transformIndicatorData(unrateRows);
+  const unrate = transformIndicatorData(unrateRows || []);
 
   const {
     data: cpiaucslRows,
     isLoading: cpiaucslLoading,
     error: cpiaucslError,
   } = useIndicatorData("CPIAUCSL");
-  const cpiaucsl = transformIndicatorData(cpiaucslRows);
+  const cpiaucsl = transformIndicatorData(cpiaucslRows || []);
 
   const {
     data: fedfundsRows,
     isLoading: fedfundsLoading,
     error: fedfundsError,
   } = useIndicatorData("FEDFUNDS");
-  const fedfunds = transformIndicatorData(fedfundsRows);
+  const fedfunds = transformIndicatorData(fedfundsRows || []);
 
   const {
     data: gs10Rows,
     isLoading: gs10Loading,
     error: gs10Error,
   } = useIndicatorData("GS10");
-  const gs10 = transformIndicatorData(gs10Rows);
+  const gs10 = transformIndicatorData(gs10Rows || []);
 
   const {
     data: payemsRows,
     isLoading: payemsLoading,
     error: payemsError,
   } = useIndicatorData("PAYEMS");
-  const payems = transformIndicatorData(payemsRows);
+  const payems = transformIndicatorData(payemsRows || []);
 
   const {
     data: m2slRows,
     isLoading: m2slLoading,
     error: m2slError,
   } = useIndicatorData("M2SL");
-  const m2sl = transformIndicatorData(m2slRows);
+  const m2sl = transformIndicatorData(m2slRows || []);
 
   const {
     data: m2vRows,
     isLoading: m2vLoading,
     error: m2vError,
   } = useIndicatorData("M2V");
-  const m2v = transformIndicatorData(m2vRows);
+  const m2v = transformIndicatorData(m2vRows || []);
 
   // Just a quick check for top chart loading / error
   // (or you can show partial charts if the others fail)
